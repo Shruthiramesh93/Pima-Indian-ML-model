@@ -1,0 +1,91 @@
+#to get and set the working directory
+getwd()
+setwd("C:/Users/nagarjun/Desktop/Shru UMBC_Sem1/Decision making support system/Project/pima-indians-diabetes-database")
+
+library(dplyr)
+library(ParamHelpers)
+library(mlr)
+library(aCRM)
+library(gmodels)
+library(rpart)
+library(rpart.plot)
+library(caret)
+
+
+#to read the data file
+read_data<-read.csv("diabetes.csv")
+
+#data partitioning-80-20%
+train_pima<-sample_frac(read_data, 0.8)
+
+rownames_train<-as.numeric(rownames(train_pima)) # because rownames() returns character
+divide_pima<-train_pima[-rownames_train,]
+
+test_pima<-divide_pima[,-9]
+
+original_testpima<- divide_pima[,1:9]
+table(is.na(original_testpima))
+
+write_train<-write.csv(train_pima,"trainpima_614.csv")
+
+# to check summary of data
+summary(train_pima)
+
+#data cleaning by assigning NA in 0's
+train_pima[, 2:3][train_pima[, 2:3] == 0] <- NA
+summary(train_pima)
+train_pima[, 6][train_pima[, 6] == 0] <- NA
+
+
+original_testpima[, 2:3][original_testpima[, 2:3] == 0] <- NA
+original_testpima[, 6][original_testpima[, 6] == 0] <- NA
+
+#missing value treatment- Median imputation
+imputeMissings(train_pima)
+
+train_pima<-imputeMissings(train_pima)
+
+table(is.na(test_pima))
+
+original_testpima<-imputeMissings(original_testpima)
+
+# Multivariate analysis-finding correlation between the variables
+cor(train_pima$Pregnancies,train_pima$Outcome)
+cor(train_pima$Glucose,train_pima$Outcome)
+cor(train_pima$BloodPressure,train_pima$Outcome)
+cor(train_pima$SkinThickness,train_pima$Outcome)
+cor(train_pima$Insulin,train_pima$Outcome)
+cor(train_pima$BMI,train_pima$Outcome)
+cor(train_pima$DiabetesPedigreeFunction,train_pima$Outcome)
+cor(train_pima$Age,train_pima$Outcome)
+
+set.seed(500)
+
+#predictivce modelling
+train_pimatree<-rpart(Outcome~.,data = train_pima,method = "class")
+
+rpart.plot(train_pimatree,tweak=3.5)
+
+prediction_trainpima<-predict(train_pimatree,newdata = train_pima,type="class")
+original_testpima$newcolumn<-predict(train_pimatree,newdata = original_testpima,type="class")
+
+newtest<-original_testpima
+
+original_testpima$newcolumn<-NA
+
+newtest<-newtest$predictedoutcome
+#4)Analysisng results
+str(prediction_trainpima)
+str(train_pima$Outcome)
+
+str(prediction_originaltestpima)
+table(original_testpima$Outcome)
+
+#since outcome is an integer, convert to a factor
+train_pima$Outcome<-as.factor(train_pima$Outcome)
+
+confusionMatrix(prediction_trainpima,train_pima$Outcome)
+
+original_testpima$Outcome<-as.factor(original_testpima$Outcome)
+
+confusionMatrix(original_testpima$newcolumn,original_testpima$Outcome)
