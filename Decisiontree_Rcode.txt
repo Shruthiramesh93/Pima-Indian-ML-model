@@ -1,6 +1,5 @@
 #to get and set the working directory
 getwd()
-setwd("C:/Users/nagarjun/Desktop/Shru UMBC_Sem1/Decision making support system/Project/pima-indians-diabetes-database")
 
 library(dplyr)
 library(ParamHelpers)
